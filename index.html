@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="推し曲大全">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>推し曲大全</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif; background: #f5f4f0; color: #1a1a1a; height: 100dvh; overflow: hidden; font-size: 14px; }
+  .app { display: flex; flex-direction: column; height: 100dvh; max-width: 520px; margin: 0 auto; background: #fff; position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.08); }
+  .header { padding: 12px 16px 0; padding-top: calc(12px + env(safe-area-inset-top)); background: #fff; border-bottom: 0.5px solid #e0dfd8; flex-shrink: 0; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .app-title { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+  .header-actions { display: flex; gap: 6px; }
+  .icon-btn { background: none; border: 0.5px solid #ccc; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 12px; color: #666; display: flex; align-items: center; gap: 4px; transition: background 0.15s; user-select: none; }
+  .icon-btn:active { background: #eee; }
+  .icon-btn.disabled { opacity: 0.35; pointer-events: none; }
+  .icon-btn.danger { color: #c62828; border-color: #c62828; }
+  .tabs { display: flex; }
+  .tab { flex: 1; text-align: center; padding: 10px 4px; font-size: 13px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: all 0.15s; user-select: none; }
+  .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: 600; }
+  .content { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 240px; gap: 10px; }
+  .empty-icon { font-size: 44px; opacity: 0.25; }
+  .empty-text { font-size: 13px; color: #999; }
+  .card-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 80px; }
+  .card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: background 0.12s; display: flex; align-items: center; gap: 12px; }
+  .card:active { background: #f0efe9; }
+  .card-thumb { width: 46px; height: 46px; border-radius: 8px; background: #f0efe9; border: 0.5px solid #e0dfd8; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; overflow: hidden; }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-artist { font-size: 11px; color: #999; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-meta { font-size: 11px; color: #aaa; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fav-badge { color: #e91e63; font-size: 15px; flex-shrink: 0; }
+  .fab { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom)); right: 18px; width: 54px; height: 54px; border-radius: 50%; background: #1a1a1a; color: #fff; border: none; cursor: pointer; font-size: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.22); transition: transform 0.15s; z-index: 10; user-select: none; }
+  .fab:active { transform: scale(0.93); }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: flex; flex-direction: column; }
+  .overlay.hidden { display: none; }
+  .modal { background: #fff; border-radius: 20px 20px 0 0; margin-top: auto; max-height: 92dvh; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); -webkit-overflow-scrolling: touch; }
+  .modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 10px auto 6px; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 12px; border-bottom: 0.5px solid #e8e7e2; }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-body { padding: 16px; }
+  .modal-actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 0.5px solid #e8e7e2; }
+  .btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; cursor: pointer; border: 0.5px solid #ccc; background: none; color: #1a1a1a; transition: background 0.12s; font-family: inherit; user-select: none; }
+  .btn:active { background: #f0efe9; }
+  .btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn.primary:active { background: #333; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+  .field input, .field textarea, .field select { width: 100%; border: 0.5px solid #ccc; border-radius: 8px; padding: 10px 12px; font-size: 16px; background: #fff; color: #1a1a1a; font-family: inherit; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: #888; }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .field-row { display: flex; gap: 12px; align-items: flex-start; }
+  .detail { position: absolute; inset: 0; background: #fff; z-index: 50; overflow-y: auto; transform: translateX(100%); transition: transform 0.28s cubic-bezier(.4,0,.2,1); -webkit-overflow-scrolling: touch; }
+  .detail.open { transform: translateX(0); }
+  .detail-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); border-bottom: 0.5px solid #e8e7e2; position: sticky; top: 0; background: #fff; z-index: 5; }
+  .back-btn { background: none; border: none; cursor: pointer; font-size: 22px; color: #1a1a1a; padding: 4px 12px 4px 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; }
+  .detail-actions { display: flex; gap: 8px; }
+  .detail-cover { width: 100%; aspect-ratio: 1; background: #f0efe9; display: flex; align-items: center; justify-content: center; font-size: 72px; overflow: hidden; }
+  .detail-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .detail-body { padding: 18px; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  .detail-artist { font-size: 12px; color: #999; margin-bottom: 4px; }
+  .detail-name { font-size: 22px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+  .detail-meta { font-size: 13px; color: #aaa; margin-bottom: 18px; }
+  .section-title { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; margin-top: 22px; }
+  .track-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0efe9; cursor: pointer; min-height: 44px; }
+  .track-item:active { color: #2563eb; }
+  .track-num { font-size: 12px; color: #bbb; width: 20px; text-align: right; flex-shrink: 0; }
+  .track-name { flex: 1; font-size: 14px; }
+  .link-chip { display: inline-flex; align-items: center; gap: 4px; background: #f0f4ff; border: 0.5px solid #c7d7fa; border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #2563eb; cursor: pointer; margin: 4px 4px 4px 0; text-decoration: none; }
+  .tidbits { font-size: 13px; line-height: 1.7; color: #444; white-space: pre-wrap; }
+  .live-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0efe9; cursor: pointer; min-height: 44px; }
+  .live-item:active { color: #2563eb; }
+  .live-date-badge { background: #f5f4f0; border-radius: 6px; padding: 4px 8px; font-size: 11px; text-align: center; line-height: 1.5; min-width: 48px; flex-shrink: 0; }
+  .setlist-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0efe9; cursor: pointer; min-height: 44px; }
+  .setlist-item:active { color: #2563eb; }
+  .info-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: baseline; }
+  .info-label { font-size: 12px; color: #aaa; min-width: 80px; flex-shrink: 0; }
+  .info-value { font-size: 14px; }
+  .info-value.link { color: #2563eb; cursor: pointer; }
+  .tag { display: inline-block; background: #f5f4f0; border: 0.5px solid #e0dfd8; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #666; margin: 2px 3px 2px 0; }
+  .multi-select { border: 0.5px solid #ccc; border-radius: 8px; overflow: hidden; max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .multi-option { display: flex; align-items: center; gap: 10px; padding: 12px; cursor: pointer; border-bottom: 0.5px solid #f0efe9; min-height: 44px; }
+  .multi-option:last-child { border-bottom: none; }
+  .multi-option:active { background: #fafaf8; }
+  .multi-option input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: #1a1a1a; }
+  .multi-option span { font-size: 13px; }
+  .link-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .link-row input { flex: 1; }
+  .link-rm { background: none; border: 0.5px solid #ddd; border-radius: 6px; padding: 8px 10px; cursor: pointer; color: #999; font-size: 13px; flex-shrink: 0; min-width: 40px; min-height: 44px; }
+  .dropdown { position: absolute; top: 38px; right: 0; background: #fff; border: 0.5px solid #ddd; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); z-index: 200; min-width: 200px; overflow: hidden; }
+  .dropdown-item { padding: 13px 16px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .dropdown-item:active { background: #f5f4f0; }
+  .dropdown-item.active { font-weight: 600; }
+  .dropdown-wrapper { position: relative; }
+  .img-upload { width: 84px; height: 84px; border: 1.5px dashed #ccc; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 30px; overflow: hidden; background: #f5f4f0; flex-shrink: 0; }
+  .img-upload img { width: 100%; height: 100%; object-fit: cover; }
+  /* install banner */
+  #installBanner { display:none; position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); background:#1a1a1a; color:#fff; border-radius:12px; padding:12px 18px; font-size:13px; z-index:300; align-items:center; gap:12px; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+  #installBanner button { background:#fff; color:#1a1a1a; border:none; border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer; font-weight:600; }
+  #installBanner .close-x { background:none; border:none; color:#aaa; font-size:18px; cursor:pointer; padding:0 0 0 4px; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-title">推し曲大全</div>
+      <div class="header-actions">
+        <div class="dropdown-wrapper" id="filterWrap">
+          <button class="icon-btn" id="filterBtn" onclick="toggleFilter()">⊕ 絞り込み</button>
+          <div class="dropdown hidden" id="filterDrop"></div>
+        </div>
+        <div class="dropdown-wrapper" id="sortWrap">
+          <button class="icon-btn" id="sortBtn" onclick="toggleSort()">↕ 並び替え</button>
+          <div class="dropdown hidden" id="sortDrop"></div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('albums')">アルバム</div>
+      <div class="tab" onclick="switchTab('songs')">楽曲</div>
+      <div class="tab" onclick="switchTab('lives')">ライブ</div>
+    </div>
+  </div>
+  <div class="content" id="mainContent"></div>
+  <button class="fab" onclick="openAddModal()">＋</button>
+
+  <!-- Detail screens -->
+  <div class="detail" id="detailAlbum">
+    <div class="detail-header">
+      <button class="back-btn" onclick="closeDetail('detailAlbum')">←</button>
+      <div class="detail-actions">
+        <button class="icon-btn" id="albumFavBtn" onclick="toggleAlbumFav()">♡</button>
+        <button class="icon-btn" onclick="openEditAlbum()">編集</button>
+      </div>
+    </div>
+    <div id="albumDetailContent"></div>
+  </div>
+  <div class="detail" id="detailSong">
+    <div class="detail-header">
+      <button class="back-btn" onclick="closeDetail('detailSong')">←</button>
+      <div class="detail-actions">
+        <button class="icon-btn" id="songFavBtn" onclick="toggleSongFav()">♡</button>
+        <button class="icon-btn" onclick="openEditSong()">編集</button>
+      </div>
+    </div>
+    <div id="songDetailContent"></div>
+  </div>
+  <div class="detail" id="detailLive">
+    <div class="detail-header">
+      <button class="back-btn" onclick="closeDetail('detailLive')">←</button>
+      <div class="detail-actions">
+        <button class="icon-btn" id="liveFavBtn" onclick="toggleLiveFav()">♡</button>
+        <button class="icon-btn" onclick="openEditLive()">編集</button>
+      </div>
+    </div>
+    <div id="liveDetailContent"></div>
+  </div>
+
+  <!-- Modals -->
+  <div class="overlay hidden" id="overlayAlbum">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <span class="modal-title" id="albumModalTitle">アルバムを追加</span>
+        <button class="icon-btn danger" id="albumDeleteBtn" style="display:none" onclick="deleteAlbum()">削除</button>
+      </div>
+      <div class="modal-body" id="albumModalBody"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('overlayAlbum')">キャンセル</button>
+        <button class="btn primary" onclick="saveAlbum()">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay hidden" id="overlaySong">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <span class="modal-title" id="songModalTitle">楽曲を追加</span>
+        <button class="icon-btn danger" id="songDeleteBtn" style="display:none" onclick="deleteSong()">削除</button>
+      </div>
+      <div class="modal-body" id="songModalBody"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('overlaySong')">キャンセル</button>
+        <button class="btn primary" onclick="saveSong()">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay hidden" id="overlayLive">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <span class="modal-title" id="liveModalTitle">ライブを追加</span>
+        <button class="icon-btn danger" id="liveDeleteBtn" style="display:none" onclick="deleteLive()">削除</button>
+      </div>
+      <div class="modal-body" id="liveModalBody"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('overlayLive')">キャンセル</button>
+        <button class="btn primary" onclick="saveLive()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install banner -->
+  <div id="installBanner">
+    📲 ホーム画面に追加できます
+    <button onclick="doInstall()">追加する</button>
+    <button class="close-x" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+  </div>
+</div>
+
+<script>
+// ===== 初期データ（天野月子） =====
+const INITIAL_DATA = (function(){
+  const albums=[
+    {id:'alb1',artist:'天野月子',title:'Sharon Stones',releaseYear:'2002-06-05',albumType:'オリジナル（1st）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'メジャーデビューアルバム。ジャケットはかぐや姫をイメージ。シングル6枚を含む全11曲収録。タイトルは女優シャロン・ストーンに由来。「カメリア」は映画『マブイの旅』エンディングテーマ。',links:[{label:'Apple Music',url:'https://music.apple.com/jp/album/sharon-stones-remaster/1207180982'}]},
+    {id:'alb2',artist:'天野月子',title:'Meg Lion',releaseYear:'2002-12-04',albumType:'オリジナル（2nd）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'1stから約半年でリリース。全10曲。絵本「メグとライオン」とリンクしたコンセプトアルバム。マザー・グース的な世界観。ライヴ感を重視したシンプルなアレンジ。',links:[]},
+    {id:'alb3',artist:'天野月子',title:'天龍',releaseYear:'2004-01-21',albumType:'オリジナル（3rd）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'全収録曲が漢字一文字という独自コンセプト。「天に昇る龍のようになりたい」という想いからタイトル決定。「蝶」はPS2「零～紅い蝶～」タイアップ。「月」は映画「ムーンライト・ジェリーフィッシュ」主題歌。ストリングスに金原千恵子グループが参加。',links:[]},
+    {id:'alb4',artist:'天野月子',title:'A MOON CHILD IN THE SKY',releaseYear:'2005-09-21',albumType:'オリジナル（4th）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'音のテーマは「ザ・ロック・アルバム」。「イデア」（アニメ金色のガッシュベルEDテーマ）「翡翠」（東京フィルハーモニー交響楽団参加）「聲」（PS2「零～刺青ノ聲～」テーマ）を収録。天野本人の名前を冠したタイトル。',links:[]},
+    {id:'alb5',artist:'天野月子',title:'ZERO',releaseYear:'2008-09-03',albumType:'オリジナル（5th）',label:'音倉レコード',image:'',fav:false,tidbits:'インディーズ回帰後初のオリジナルアルバム。「ゼロの調律」（Wii「零～月蝕の仮面～」テーマ）収録。限定盤は2,000枚限定。同年末の歌手活動休止前最後のオリジナル作品。',links:[]},
+    {id:'alb6',artist:'天野月子',title:'元服',releaseYear:'2015-11-18',albumType:'ベスト（タイアップ）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'デビュー15周年記念タイアップベストアルバム。「零」シリーズ主題歌を中心に構成。YURiCa/花たんとのデュエット新曲を含む10曲。DVDにはMV7本収録。',links:[]},
+    {id:'alb7',artist:'天野月',title:'天の樹',releaseYear:'2012-07-25',albumType:'オリジナル（天野月名義1st）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義での初のフルアルバム。チェリストの分島花音が収録に参加。',links:[]},
+    {id:'alb8',artist:'天野月',title:'Daisy',releaseYear:'2013-09-25',albumType:'オリジナル（天野月名義2nd）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義2枚目のアルバム。',links:[]},
+    {id:'alb9',artist:'天野月',title:'Five Rings',releaseYear:'2019-04-01',albumType:'オリジナル（天野月名義）',label:'音倉レコード',image:'',fav:false,tidbits:'2度目の活動再開後初のフルアルバム。「ウロボロス」収録。',links:[]},
+  ];
+  const songs=[
+    {id:'s01',artist:'天野月子',title:'菩提樹',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'メジャー4thシングル。作詞・作曲：天野月子 編曲：戸倉弘智。',links:[],fav:false},
+    {id:'s02',artist:'天野月子',title:'Treasure',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s03',artist:'天野月子',title:'B.G.～Black Guitar+Berry Garden～',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'アーリー90年代アイドル風ガールポップ的なテイストが新鮮な一曲。',links:[],fav:false},
+    {id:'s04',artist:'天野月子',title:'HONEY?',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s05',artist:'天野月子',title:'スナイパー',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'メジャー3rdシングル。',links:[],fav:false},
+    {id:'s06',artist:'天野月子',title:'青紫',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s07',artist:'天野月子',title:'刺青',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s08',artist:'天野月子',title:'Butter Fingers',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'ギンギンなロック魂が光るナンバー。',links:[],fav:false},
+    {id:'s09',artist:'天野月子',title:'ロビン',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s10',artist:'天野月子',title:'箱庭 ～ミニチュアガーデン～(Sharon Mix)',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'インディーズデビューシングルのリアレンジ版。ホラーゲーム「零」シリーズのディレクターがこの曲を聴いて天野月子起用を決めたとされる。',links:[],fav:false},
+    {id:'s11',artist:'天野月子',title:'カメリア',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'映画「マブイの旅」エンディングテーマ。',links:[],fav:false},
+    {id:'s12',artist:'天野月子',title:'箱舟',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s13',artist:'天野月子',title:'人形(Meg Mix)',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'メジャー5thシングル。',links:[],fav:false},
+    {id:'s14',artist:'天野月子',title:'日曜日',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s15',artist:'天野月子',title:'ダンデライオン',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s16',artist:'天野月子',title:'時計台の鐘',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'絵本「メグとライオン」の序章物語と連動。',links:[],fav:false},
+    {id:'s17',artist:'天野月子',title:'羊',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s18',artist:'天野月子',title:'銀猫',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s19',artist:'天野月子',title:'ライオン',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'MEG LIONを代表する名曲。天野月名義活動再開後も長く演奏され続けている。',links:[],fav:false},
+    {id:'s20',artist:'天野月子',title:'pigeon',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s21',artist:'天野月子',title:'トムパンクス',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'「トム・ハンクス」をモチーフにしたスピーディなパンクナンバー。',links:[],fav:false},
+    {id:'s22',artist:'天野月子',title:'クレマチス',releaseYear:'2002-12-04',albumId:'alb2',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s23',artist:'天野月子',title:'劔',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'天龍のオープニングトラック。',links:[],fav:false},
+    {id:'s24',artist:'天野月子',title:'鮫',releaseYear:'2003-07-30',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'メジャー6thシングル。漢字一文字シングル三部作の第1弾。激しいドラミングとうなるベースラインが印象的。',links:[{label:'歌ネット',url:'https://www.uta-net.com/song/65077/'}],fav:false},
+    {id:'s25',artist:'天野月子',title:'恋',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s26',artist:'天野月子',title:'骨',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'ストリングス（金原千恵子グループ）参加。',links:[],fav:false},
+    {id:'s27',artist:'天野月子',title:'龍',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[{label:'歌ネット',url:'https://www.uta-net.com/song/70816/'}],fav:false},
+    {id:'s28',artist:'天野月子',title:'天',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'ストリングス（金原千恵子グループ）参加。',links:[],fav:false},
+    {id:'s29',artist:'天野月子',title:'蝶',releaseYear:'2003-11-12',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'PS2「零～紅い蝶～」テーマソング。ロングセールスとなり天野月子を広く知らしめた代表曲。零シリーズのディレクターが「箱庭を聞いたときからこの人しかいないと思っていた」と語っている。',links:[],fav:false},
+    {id:'s30',artist:'天野月子',title:'月',releaseYear:'2004-07-14',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'映画「ムーンライト・ジェリーフィッシュ」主題歌。',links:[],fav:false},
+    {id:'s31',artist:'天野月子',title:'虹',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s32',artist:'天野月子',title:'轍',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s33',artist:'天野月子',title:'枳',releaseYear:'2004-01-21',albumId:'alb3',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s34',artist:'天野月子',title:'Devil Flamingo',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'人魚姫の世界を天野月子流ロックで表現した名ロックチューン。',links:[],fav:false},
+    {id:'s35',artist:'天野月子',title:'JOKER JOE',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'作曲は天野月子・戸倉弘智の共作。',links:[],fav:false},
+    {id:'s36',artist:'天野月子',title:'イデア (A Moon Child mix)',releaseYear:'2004-11-03',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'アニメ「金色のガッシュベル!!」エンディングテーマ。',links:[],fav:false},
+    {id:'s37',artist:'天野月子',title:'Stone',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s38',artist:'天野月子',title:'翡翠 (A Moon Child type)',releaseYear:'2005-02-16',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'東京フィルハーモニー交響楽団が参加。出会いと別れをテーマにした楽曲。',links:[],fav:false},
+    {id:'s39',artist:'天野月子',title:'1/2 -a half-',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s40',artist:'天野月子',title:'聲',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'PS2「零～刺青ノ聲～」テーマソング。',links:[],fav:false},
+    {id:'s41',artist:'天野月子',title:'砂糖水',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s42',artist:'天野月子',title:'パレード',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s43',artist:'天野月子',title:'博士と孔雀',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s44',artist:'天野月子',title:'花冠',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s45',artist:'天野月子',title:'体操',releaseYear:'2005-09-21',albumId:'alb4',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'',links:[],fav:false},
+    {id:'s46',artist:'天野月子',title:'ゼロの調律',releaseYear:'2008-09-03',albumId:'alb5',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'Wii「零～月蝕の仮面～」テーマソング。インディーズ時代の代表曲。',links:[],fav:false},
+    {id:'s47',artist:'天野月子',title:'NOISE',releaseYear:'2008-09-03',albumId:'alb5',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'Wii「零～月蝕の仮面～」エンディングテーマ。',links:[],fav:false},
+    {id:'s48',artist:'天野月子',title:'くれなゐ',releaseYear:'2015-11-18',albumId:'alb6',lyricist:'天野月',composer:'天野月',edition:'',tidbits:'Wii「零～眞紅の蝶～」テーマソング。（天野月名義）',links:[],fav:false},
+    {id:'s49',artist:'天野月子',title:'鳥籠-in this cage-',releaseYear:'2015-11-18',albumId:'alb6',lyricist:'天野月',composer:'天野月',edition:'',tidbits:'Wii U「零～濡鴉ノ巫女～」タイアップソング。（天野月名義）',links:[],fav:false},
+  ];
+  return {albums,songs,lives:[]};
+})();
+
+let state={albums:[],songs:[],lives:[]};
+let currentTab='albums';
+let currentAlbumId=null,currentSongId=null,currentLiveId=null;
+let editingAlbumId=null,editingSongId=null,editingLiveId=null;
+let filterArtist='',sortKey='';
+let showSortDrop=false,showFilterDrop=false;
+let albumLinkRows=[],songLinkRows=[],liveLinkRows=[];
+let deferredPrompt=null;
+
+// PWA install prompt
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').style.display='flex';
+});
+function doInstall(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').style.display='none';});
+}
+
+// Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+function loadData(){
+  try{const d=localStorage.getItem('oshi_data_v2');if(d){state=JSON.parse(d);}else{state=JSON.parse(JSON.stringify(INITIAL_DATA));saveData();}}catch(e){state=JSON.parse(JSON.stringify(INITIAL_DATA));}
+  render();
+}
+function saveData(){try{localStorage.setItem('oshi_data_v2',JSON.stringify(state));}catch(e){}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+
+function switchTab(tab){
+  currentTab=tab;filterArtist='';sortKey='';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['albums','songs','lives'][i]===tab));
+  render();
+}
+function render(){
+  updateHeaderBtns();
+  const c=document.getElementById('mainContent');
+  if(currentTab==='albums')renderAlbums(c);
+  else if(currentTab==='songs')renderSongs(c);
+  else renderLives(c);
+}
+function updateHeaderBtns(){
+  document.getElementById('filterBtn').classList.toggle('disabled',getArtists().length<=1);
+  const cnt=currentTab==='albums'?state.albums.length:currentTab==='songs'?state.songs.length:state.lives.length;
+  document.getElementById('sortBtn').classList.toggle('disabled',cnt===0);
+}
+function getArtists(){return[...new Set([...state.albums.map(a=>a.artist),...state.songs.map(s=>s.artist),...state.lives.map(l=>l.artist)])].filter(Boolean);}
+function filterAndSort(items){
+  let list=[...items];
+  if(filterArtist)list=list.filter(i=>i.artist===filterArtist);
+  if(sortKey==='year')list.sort((a,b)=>(a.releaseYear||a.date||'9999').localeCompare(b.releaseYear||b.date||'9999'));
+  else if(sortKey==='artist')list.sort((a,b)=>(a.artist||'').localeCompare(b.artist||'','ja'));
+  else if(sortKey==='name')list.sort((a,b)=>(a.title||a.name||'').localeCompare(b.title||b.name||'','ja'));
+  else if(sortKey==='date')list.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  return list;
+}
+function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function renderAlbums(c){
+  const items=filterAndSort(state.albums);
+  if(!items.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">💿</div><div class="empty-text">登録アルバムがありません</div></div>`;return;}
+  c.innerHTML=`<div class="card-list">${items.map(a=>`<div class="card" onclick="openAlbumDetail('${a.id}')"><div class="card-thumb">${a.image?`<img src="${a.image}">`:'💿'}</div><div class="card-body"><div class="card-artist">${esc(a.artist)}</div><div class="card-title">${esc(a.title)}</div><div class="card-meta">${esc(a.releaseYear||'')}${a.albumType?' · '+esc(a.albumType):''}</div></div>${a.fav?'<span class="fav-badge">♥</span>':''}</div>`).join('')}</div>`;
+}
+function renderSongs(c){
+  const items=filterAndSort(state.songs);
+  if(!items.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🎵</div><div class="empty-text">登録楽曲がありません</div></div>`;return;}
+  c.innerHTML=`<div class="card-list">${items.map(s=>`<div class="card" onclick="openSongDetail('${s.id}')"><div class="card-thumb">${getSongThumb(s)}</div><div class="card-body"><div class="card-artist">${esc(s.artist)}</div><div class="card-title">${esc(s.title)}</div><div class="card-meta">${esc(s.releaseYear||'')}${s.albumId?' · '+esc(getAlbumTitle(s.albumId)):''}</div></div>${s.fav?'<span class="fav-badge">♥</span>':''}</div>`).join('')}</div>`;
+}
+function renderLives(c){
+  const items=filterAndSort(state.lives);
+  if(!items.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🎤</div><div class="empty-text">登録ライブがありません</div></div>`;return;}
+  c.innerHTML=`<div class="card-list">${items.map(l=>`<div class="card" onclick="openLiveDetail('${l.id}')"><div class="card-thumb" style="font-size:22px">🎤</div><div class="card-body"><div class="card-artist">${esc(l.artist)}</div><div class="card-title">${esc(l.name)}</div><div class="card-meta">${esc(l.date||'')}${l.venue?' · '+esc(l.venue):''}</div></div>${l.fav?'<span class="fav-badge">♥</span>':''}</div>`).join('')}</div>`;
+}
+function getSongThumb(s){if(s.albumId){const a=state.albums.find(a=>a.id===s.albumId);if(a&&a.image)return`<img src="${a.image}">`;}return'🎵';}
+function getAlbumTitle(id){const a=state.albums.find(a=>a.id===id);return a?a.title:'';}
+function openAlbumDetail(id){currentAlbumId=id;renderAlbumDetail();document.getElementById('detailAlbum').classList.add('open');}
+function openSongDetail(id){currentSongId=id;renderSongDetail();document.getElementById('detailSong').classList.add('open');}
+function openLiveDetail(id){currentLiveId=id;renderLiveDetail();document.getElementById('detailLive').classList.add('open');}
+function closeDetail(id){document.getElementById(id).classList.remove('open');}
+function renderAlbumDetail(){
+  const a=state.albums.find(x=>x.id===currentAlbumId);if(!a)return;
+  document.getElementById('albumFavBtn').textContent=a.fav?'♥':'♡';
+  const tracks=state.songs.filter(s=>s.albumId===a.id);
+  const links=(a.links||[]).map(l=>`<a class="link-chip" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 ${esc(l.label||l.url)}</a>`).join('');
+  document.getElementById('albumDetailContent').innerHTML=`
+    <div class="detail-cover">${a.image?`<img src="${a.image}">`:'💿'}</div>
+    <div class="detail-body">
+      <div class="detail-artist">${esc(a.artist)}</div>
+      <div class="detail-name">${esc(a.title)}</div>
+      <div class="detail-meta">${[a.releaseYear,a.albumType,a.label].filter(Boolean).join(' · ')}</div>
+      ${a.tidbits?`<div class="section-title">小ネタ</div><div class="tidbits">${esc(a.tidbits)}</div>`:''}
+      ${links?`<div style="margin-top:8px">${links}</div>`:''}
+      ${tracks.length?`<div class="section-title">収録曲 (${tracks.length})</div>${tracks.map((s,i)=>`<div class="track-item" onclick="openSongFromAlbum('${s.id}')"><span class="track-num">${i+1}</span><span class="track-name">${esc(s.title)}</span>${s.fav?'<span style="color:#e91e63;font-size:12px">♥</span>':''}</div>`).join('')}`:''}
+      <div style="height:80px"></div>
+    </div>`;
+}
+function renderSongDetail(){
+  const s=state.songs.find(x=>x.id===currentSongId);if(!s)return;
+  document.getElementById('songFavBtn').textContent=s.fav?'♥':'♡';
+  const alb=s.albumId?state.albums.find(a=>a.id===s.albumId):null;
+  const links=(s.links||[]).map(l=>`<a class="link-chip" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 ${esc(l.label||l.url)}</a>`).join('');
+  const liveUses=state.lives.filter(l=>(l.setlist||[]).includes(s.id));
+  document.getElementById('songDetailContent').innerHTML=`
+    <div class="detail-cover">${alb&&alb.image?`<img src="${alb.image}">`:'🎵'}</div>
+    <div class="detail-body">
+      <div class="detail-artist">${esc(s.artist)}</div>
+      <div class="detail-name">${esc(s.title)}</div>
+      <div class="detail-meta">${esc(s.releaseYear||'')}</div>
+      <div class="info-row"><span class="info-label">作詞</span><span class="info-value">${esc(s.lyricist||'—')}</span></div>
+      <div class="info-row"><span class="info-label">作曲</span><span class="info-value">${esc(s.composer||'—')}</span></div>
+      ${alb?`<div class="info-row"><span class="info-label">収録アルバム</span><span class="info-value link" onclick="openAlbumFromSong('${alb.id}')">${esc(alb.title)}</span></div>`:''}
+      ${s.edition?`<div class="info-row"><span class="info-label">収録盤</span><span class="info-value">${esc(s.edition)}</span></div>`:''}
+      ${s.lyrics?`<div class="section-title">歌詞</div><div class="tidbits">${esc(s.lyrics)}</div>`:''}
+      ${s.tidbits?`<div class="section-title">小ネタ</div><div class="tidbits">${esc(s.tidbits)}</div>`:''}
+      ${links?`<div style="margin-top:8px">${links}</div>`:''}
+      ${liveUses.length?`<div class="section-title">ライブ使用歴 (${liveUses.length})</div>${liveUses.map(l=>`<div class="live-item" onclick="openLiveFromSong('${l.id}')"><div class="live-date-badge">${(l.date||'').slice(0,7).replace('-','/')}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${esc(l.name)}</div><div style="font-size:11px;color:#aaa">${esc(l.venue||'')}</div></div></div>`).join('')}`:''}
+      <div style="height:80px"></div>
+    </div>`;
+}
+function renderLiveDetail(){
+  const l=state.lives.find(x=>x.id===currentLiveId);if(!l)return;
+  document.getElementById('liveFavBtn').textContent=l.fav?'♥':'♡';
+  const links=(l.links||[]).map(lk=>`<a class="link-chip" href="${esc(lk.url)}" target="_blank" rel="noopener">🔗 ${esc(lk.label||lk.url)}</a>`).join('');
+  const setlist=(l.setlist||[]).map(sid=>state.songs.find(s=>s.id===sid)).filter(Boolean);
+  document.getElementById('liveDetailContent').innerHTML=`
+    <div class="detail-cover" style="font-size:80px">🎤</div>
+    <div class="detail-body">
+      <div class="detail-artist">${esc(l.artist)}</div>
+      <div class="detail-name">${esc(l.name)}</div>
+      <div class="detail-meta">${[l.date,l.venue].filter(Boolean).join(' · ')}</div>
+      ${l.formation?`<div class="info-row"><span class="info-label">編成</span><span class="info-value">${esc(l.formation)}</span></div>`:''}
+      ${l.tidbits?`<div class="section-title">小ネタ</div><div class="tidbits">${esc(l.tidbits)}</div>`:''}
+      ${links?`<div style="margin-top:8px">${links}</div>`:''}
+      ${setlist.length?`<div class="section-title">セットリスト (${setlist.length})</div>${setlist.map((s,i)=>`<div class="setlist-item" onclick="openSongFromLive('${s.id}')"><span style="font-size:12px;color:#bbb;min-width:22px;text-align:right">${i+1}</span><span style="flex:1;font-size:14px">${esc(s.title)}</span><span style="font-size:11px;color:#aaa">${esc(s.artist)}</span></div>`).join('')}`:''}
+      ${l.goods&&l.goods.length?`<div class="section-title">グッズ</div><div>${l.goods.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}</div>`:''}
+      <div style="height:80px"></div>
+    </div>`;
+}
+function openSongFromAlbum(id){currentSongId=id;renderSongDetail();document.getElementById('detailSong').classList.add('open');}
+function openAlbumFromSong(id){currentAlbumId=id;renderAlbumDetail();document.getElementById('detailAlbum').classList.add('open');}
+function openLiveFromSong(id){currentLiveId=id;renderLiveDetail();document.getElementById('detailLive').classList.add('open');}
+function openSongFromLive(id){currentSongId=id;renderSongDetail();document.getElementById('detailSong').classList.add('open');}
+function toggleAlbumFav(){const a=state.albums.find(x=>x.id===currentAlbumId);if(a){a.fav=!a.fav;saveData();renderAlbumDetail();render();}}
+function toggleSongFav(){const s=state.songs.find(x=>x.id===currentSongId);if(s){s.fav=!s.fav;saveData();renderSongDetail();}}
+function toggleLiveFav(){const l=state.lives.find(x=>x.id===currentLiveId);if(l){l.fav=!l.fav;saveData();renderLiveDetail();}}
+function openAddModal(){if(currentTab==='albums'){editingAlbumId=null;showAlbumModal();}else if(currentTab==='songs'){editingSongId=null;showSongModal();}else{editingLiveId=null;showLiveModal();}}
+function openEditAlbum(){editingAlbumId=currentAlbumId;showAlbumModal();}
+function openEditSong(){editingSongId=currentSongId;showSongModal();}
+function openEditLive(){editingLiveId=currentLiveId;showLiveModal();}
+function showAlbumModal(){
+  const a=editingAlbumId?state.albums.find(x=>x.id===editingAlbumId):null;
+  document.getElementById('albumModalTitle').textContent=a?'アルバムを編集':'アルバムを追加';
+  document.getElementById('albumDeleteBtn').style.display=a?'':'none';
+  albumLinkRows=a&&a.links?a.links.map(l=>({...l})):[];
+  document.getElementById('albumModalBody').innerHTML=`
+    <div class="field field-row">
+      <div><label>ジャケット画像</label>
+        <div class="img-upload" onclick="document.getElementById('albumImg').click()">
+          <img id="albumImgPrev" style="display:${a&&a.image?'block':'none'};width:100%;height:100%;object-fit:cover" ${a&&a.image?`src="${a.image}"`:''}><span id="albumImgIcon" style="display:${a&&a.image?'none':'block'}">💿</span>
+        </div>
+        <input type="file" id="albumImg" accept="image/*" style="display:none" onchange="previewImg(this,'albumImgPrev','albumImgIcon','albumImgData')">
+        <input type="hidden" id="albumImgData" value="${a&&a.image?a.image:''}">
+      </div>
+      <div style="flex:1">
+        <div class="field"><label>アーティスト名</label><input id="albumArtist" value="${esc(a?a.artist:'')}"></div>
+        <div class="field"><label>アルバム名 *</label><input id="albumTitle" value="${esc(a?a.title:'')}"></div>
+      </div>
+    </div>
+    <div class="field"><label>リリース年月日</label><input id="albumYear" type="date" value="${a?a.releaseYear:''}"></div>
+    <div class="field"><label>種別</label><input id="albumType" value="${esc(a?a.albumType:'')}"></div>
+    <div class="field"><label>レーベル</label><input id="albumLabel" value="${esc(a?a.label:'')}"></div>
+    <div class="field"><label>小ネタ</label><textarea id="albumTidbits">${esc(a?a.tidbits||'':'')}</textarea></div>
+    <div class="field"><label>リンク</label><div id="albumLinksContainer"></div><button class="btn" style="width:auto;padding:6px 14px;font-size:12px;margin-top:4px" onclick="addLinkRow('album')">＋ リンクを追加</button></div>`;
+  renderAlbumLinksUI();
+  document.getElementById('overlayAlbum').classList.remove('hidden');
+}
+function showSongModal(){
+  const s=editingSongId?state.songs.find(x=>x.id===editingSongId):null;
+  document.getElementById('songModalTitle').textContent=s?'楽曲を編集':'楽曲を追加';
+  document.getElementById('songDeleteBtn').style.display=s?'':'none';
+  songLinkRows=s&&s.links?s.links.map(l=>({...l})):[];
+  const albumOptions=state.albums.map(a=>`<option value="${a.id}" ${s&&s.albumId===a.id?'selected':''}>${esc(a.artist?a.artist+' / ':'')}${esc(a.title)}</option>`).join('');
+  document.getElementById('songModalBody').innerHTML=`
+    <div class="field"><label>アーティスト名</label><input id="songArtist" value="${esc(s?s.artist:'')}"></div>
+    <div class="field"><label>楽曲名 *</label><input id="songTitle" value="${esc(s?s.title:'')}"></div>
+    <div class="field"><label>収録アルバム</label><select id="songAlbum"><option value="">（なし）</option>${albumOptions}</select></div>
+    <div class="field"><label>収録盤・エディション</label><input id="songEdition" value="${esc(s?s.edition:'')}"></div>
+    <div class="field"><label>リリース年月日</label><input id="songYear" type="date" value="${s?s.releaseYear:''}"></div>
+    <div class="field"><label>作詞</label><input id="songLyricist" value="${esc(s?s.lyricist:'')}"></div>
+    <div class="field"><label>作曲</label><input id="songComposer" value="${esc(s?s.composer:'')}"></div>
+    <div class="field"><label>歌詞</label><textarea id="songLyrics" style="min-height:120px">${esc(s?s.lyrics||'':'')}</textarea></div>
+    <div class="field"><label>小ネタ</label><textarea id="songTidbits">${esc(s?s.tidbits||'':'')}</textarea></div>
+    <div class="field"><label>リンク</label><div id="songLinksContainer"></div><button class="btn" style="width:auto;padding:6px 14px;font-size:12px;margin-top:4px" onclick="addLinkRow('song')">＋ リンクを追加</button></div>`;
+  renderSongLinksUI();
+  document.getElementById('overlaySong').classList.remove('hidden');
+}
+function showLiveModal(){
+  const l=editingLiveId?state.lives.find(x=>x.id===editingLiveId):null;
+  document.getElementById('liveModalTitle').textContent=l?'ライブを編集':'ライブを追加';
+  document.getElementById('liveDeleteBtn').style.display=l?'':'none';
+  liveLinkRows=l&&l.links?l.links.map(lk=>({...lk})):[];
+  const songOpts=state.songs.map(s=>`<div class="multi-option"><input type="checkbox" id="sl_${s.id}" value="${s.id}" ${l&&(l.setlist||[]).includes(s.id)?'checked':''}><span>${esc(s.artist?s.artist+' / ':'')}${esc(s.title)}</span></div>`).join('');
+  document.getElementById('liveModalBody').innerHTML=`
+    <div class="field"><label>アーティスト名</label><input id="liveArtist" value="${esc(l?l.artist:'')}"></div>
+    <div class="field"><label>ライブ名 *</label><input id="liveName" value="${esc(l?l.name:'')}"></div>
+    <div class="field"><label>会場</label><input id="liveVenue" value="${esc(l?l.venue:'')}"></div>
+    <div class="field"><label>開催日</label><input id="liveDate" type="date" value="${l?l.date:''}"></div>
+    <div class="field"><label>編成</label><input id="liveFormation" value="${esc(l?l.formation:'')}"></div>
+    <div class="field"><label>セットリスト</label>${songOpts?`<div class="multi-select">${songOpts}</div>`:'<div style="font-size:13px;color:#aaa">楽曲を先に登録してください</div>'}</div>
+    <div class="field"><label>グッズ（カンマ区切り）</label><input id="liveGoods" value="${esc(l&&l.goods?l.goods.join(', '):'')}" placeholder="タオル, Tシャツ, ..."></div>
+    <div class="field"><label>小ネタ</label><textarea id="liveTidbits">${esc(l?l.tidbits||'':'')}</textarea></div>
+    <div class="field"><label>リンク</label><div id="liveLinksContainer"></div><button class="btn" style="width:auto;padding:6px 14px;font-size:12px;margin-top:4px" onclick="addLinkRow('live')">＋ リンクを追加</button></div>`;
+  renderLiveLinksUI();
+  document.getElementById('overlayLive').classList.remove('hidden');
+}
+function addLinkRow(type){if(type==='album')albumLinkRows.push({label:'',url:''});else if(type==='song')songLinkRows.push({label:'',url:''});else liveLinkRows.push({label:'',url:''});renderLinksUI(type);}
+function removeLink(type,i){if(type==='album')albumLinkRows.splice(i,1);else if(type==='song')songLinkRows.splice(i,1);else liveLinkRows.splice(i,1);renderLinksUI(type);}
+function renderLinksUI(type){if(type==='album')renderAlbumLinksUI();else if(type==='song')renderSongLinksUI();else renderLiveLinksUI();}
+function renderAlbumLinksUI(){const c=document.getElementById('albumLinksContainer');if(!c)return;c.innerHTML=albumLinkRows.map((r,i)=>`<div class="link-row"><input placeholder="ラベル" value="${esc(r.label)}" oninput="albumLinkRows[${i}].label=this.value" style="flex:1"><input placeholder="https://..." value="${esc(r.url)}" oninput="albumLinkRows[${i}].url=this.value" style="flex:2"><button class="link-rm" onclick="removeLink('album',${i})">✕</button></div>`).join('');}
+function renderSongLinksUI(){const c=document.getElementById('songLinksContainer');if(!c)return;c.innerHTML=songLinkRows.map((r,i)=>`<div class="link-row"><input placeholder="ラベル" value="${esc(r.label)}" oninput="songLinkRows[${i}].label=this.value" style="flex:1"><input placeholder="https://..." value="${esc(r.url)}" oninput="songLinkRows[${i}].url=this.value" style="flex:2"><button class="link-rm" onclick="removeLink('song',${i})">✕</button></div>`).join('');}
+function renderLiveLinksUI(){const c=document.getElementById('liveLinksContainer');if(!c)return;c.innerHTML=liveLinkRows.map((r,i)=>`<div class="link-row"><input placeholder="ラベル" value="${esc(r.label)}" oninput="liveLinkRows[${i}].label=this.value" style="flex:1"><input placeholder="https://..." value="${esc(r.url)}" oninput="liveLinkRows[${i}].url=this.value" style="flex:2"><button class="link-rm" onclick="removeLink('live',${i})">✕</button></div>`).join('');}
+function saveAlbum(){
+  const title=document.getElementById('albumTitle').value.trim();if(!title){alert('アルバム名を入力してください');return;}
+  const data={artist:document.getElementById('albumArtist').value.trim(),title,releaseYear:document.getElementById('albumYear').value,albumType:document.getElementById('albumType').value.trim(),label:document.getElementById('albumLabel').value.trim(),tidbits:document.getElementById('albumTidbits').value.trim(),image:document.getElementById('albumImgData').value||'',links:albumLinkRows.filter(r=>r.url)};
+  if(editingAlbumId){Object.assign(state.albums.find(x=>x.id===editingAlbumId),data);}else{state.albums.push({id:uid(),fav:false,...data});}
+  saveData();closeModal('overlayAlbum');render();if(editingAlbumId)renderAlbumDetail();
+}
+function saveSong(){
+  const title=document.getElementById('songTitle').value.trim();if(!title){alert('楽曲名を入力してください');return;}
+  const data={artist:document.getElementById('songArtist').value.trim(),title,albumId:document.getElementById('songAlbum').value||null,edition:document.getElementById('songEdition').value.trim(),releaseYear:document.getElementById('songYear').value,lyricist:document.getElementById('songLyricist').value.trim(),composer:document.getElementById('songComposer').value.trim(),lyrics:document.getElementById('songLyrics').value.trim(),tidbits:document.getElementById('songTidbits').value.trim(),links:songLinkRows.filter(r=>r.url)};
+  if(editingSongId){Object.assign(state.songs.find(x=>x.id===editingSongId),data);}else{state.songs.push({id:uid(),fav:false,...data});}
+  saveData();closeModal('overlaySong');render();if(editingSongId)renderSongDetail();
+}
+function saveLive(){
+  const name=document.getElementById('liveName').value.trim();if(!name){alert('ライブ名を入力してください');return;}
+  const setlist=Array.from(document.querySelectorAll('#liveModalBody input[type=checkbox]:checked')).map(cb=>cb.value);
+  const goods=(document.getElementById('liveGoods').value||'').split(',').map(g=>g.trim()).filter(Boolean);
+  const data={artist:document.getElementById('liveArtist').value.trim(),name,venue:document.getElementById('liveVenue').value.trim(),date:document.getElementById('liveDate').value,formation:document.getElementById('liveFormation').value.trim(),tidbits:document.getElementById('liveTidbits').value.trim(),setlist,goods,links:liveLinkRows.filter(r=>r.url)};
+  if(editingLiveId){Object.assign(state.lives.find(x=>x.id===editingLiveId),data);}else{state.lives.push({id:uid(),fav:false,...data});}
+  saveData();closeModal('overlayLive');render();if(editingLiveId)renderLiveDetail();
+}
+function deleteAlbum(){if(!confirm('このアルバムを削除しますか？'))return;state.albums=state.albums.filter(a=>a.id!==editingAlbumId);saveData();closeModal('overlayAlbum');closeDetail('detailAlbum');render();}
+function deleteSong(){if(!confirm('この楽曲を削除しますか？'))return;state.songs=state.songs.filter(s=>s.id!==editingSongId);state.lives.forEach(l=>{if(l.setlist)l.setlist=l.setlist.filter(id=>id!==editingSongId);});saveData();closeModal('overlaySong');closeDetail('detailSong');render();}
+function deleteLive(){if(!confirm('このライブを削除しますか？'))return;state.lives=state.lives.filter(l=>l.id!==editingLiveId);saveData();closeModal('overlayLive');closeDetail('detailLive');render();}
+function previewImg(input,prevId,iconId,dataId){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{document.getElementById(prevId).src=e.target.result;document.getElementById(prevId).style.display='block';document.getElementById(iconId).style.display='none';document.getElementById(dataId).value=e.target.result;};
+  r.readAsDataURL(file);
+}
+function toggleSort(){
+  showSortDrop=!showSortDrop;showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');
+  const drop=document.getElementById('sortDrop');
+  if(showSortDrop){
+    const opts=currentTab==='lives'?[['date','開催日'],['artist','アーティスト五十音'],['name','ライブ名五十音']]:[['year','リリース年'],['artist','アーティスト五十音'],['name',currentTab==='albums'?'アルバム名五十音':'楽曲名五十音']];
+    drop.innerHTML=opts.map(([k,l])=>`<div class="dropdown-item ${sortKey===k?'active':''}" onclick="setSort('${k}')">${sortKey===k?'✓ ':''}${l}</div>`).join('');
+    drop.classList.remove('hidden');
+  }else{drop.classList.add('hidden');}
+}
+function setSort(k){sortKey=k;showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');render();}
+function toggleFilter(){
+  showFilterDrop=!showFilterDrop;showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');
+  const drop=document.getElementById('filterDrop');
+  if(showFilterDrop){
+    const artists=getArtists();
+    drop.innerHTML=`<div class="dropdown-item ${filterArtist===''?'active':''}" onclick="setFilter('')">${filterArtist===''?'✓ ':''}すべて表示</div>`+artists.map(a=>`<div class="dropdown-item ${filterArtist===a?'active':''}" onclick="setFilter(${JSON.stringify(a)})">${filterArtist===a?'✓ ':''}${esc(a)}</div>`).join('');
+    drop.classList.remove('hidden');
+  }else{drop.classList.add('hidden');}
+}
+function setFilter(a){filterArtist=a;showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');render();}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+document.addEventListener('click',e=>{
+  if(!document.getElementById('sortWrap').contains(e.target)){showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');}
+  if(!document.getElementById('filterWrap').contains(e.target)){showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');}
+});
+['overlayAlbum','overlaySong','overlayLive'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeModal(id);});
+});
+
+loadData();
+</script>
+</body>
+</html>
