@@ -116,11 +116,11 @@
       <div class="app-title">推し曲大全</div>
       <div class="header-actions">
         <div class="dropdown-wrapper" id="filterWrap">
-          <button class="icon-btn" id="filterBtn" onclick="toggleFilter()">⊕ 絞り込み</button>
+          <button class="icon-btn" id="filterBtn" onclick="toggleFilter(event)">⊕ 絞り込み</button>
           <div class="dropdown hidden" id="filterDrop"></div>
         </div>
         <div class="dropdown-wrapper" id="sortWrap">
-          <button class="icon-btn" id="sortBtn" onclick="toggleSort()">↕ 並び替え</button>
+          <button class="icon-btn" id="sortBtn" onclick="toggleSort(event)">↕ 並び替え</button>
           <div class="dropdown hidden" id="sortDrop"></div>
         </div>
       </div>
@@ -228,9 +228,30 @@ const INITIAL_DATA = (function(){
     {id:'alb4',artist:'天野月子',title:'A MOON CHILD IN THE SKY',releaseYear:'2005-09-21',albumType:'オリジナル（4th）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'音のテーマは「ザ・ロック・アルバム」。「イデア」（アニメ金色のガッシュベルEDテーマ）「翡翠」（東京フィルハーモニー交響楽団参加）「聲」（PS2「零～刺青ノ聲～」テーマ）を収録。天野本人の名前を冠したタイトル。',links:[]},
     {id:'alb5',artist:'天野月子',title:'ZERO',releaseYear:'2008-09-03',albumType:'オリジナル（5th）',label:'音倉レコード',image:'',fav:false,tidbits:'インディーズ回帰後初のオリジナルアルバム。「ゼロの調律」（Wii「零～月蝕の仮面～」テーマ）収録。限定盤は2,000枚限定。同年末の歌手活動休止前最後のオリジナル作品。',links:[]},
     {id:'alb6',artist:'天野月子',title:'元服',releaseYear:'2015-11-18',albumType:'ベスト（タイアップ）',label:'ポニーキャニオン',image:'',fav:false,tidbits:'デビュー15周年記念タイアップベストアルバム。「零」シリーズ主題歌を中心に構成。YURiCa/花たんとのデュエット新曲を含む10曲。DVDにはMV7本収録。',links:[]},
-    {id:'alb7',artist:'天野月',title:'天の樹',releaseYear:'2012-07-25',albumType:'オリジナル（天野月名義1st）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義での初のフルアルバム。チェリストの分島花音が収録に参加。',links:[]},
-    {id:'alb8',artist:'天野月',title:'Daisy',releaseYear:'2013-09-25',albumType:'オリジナル（天野月名義2nd）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義2枚目のアルバム。',links:[]},
-    {id:'alb9',artist:'天野月',title:'Five Rings',releaseYear:'2019-04-01',albumType:'オリジナル（天野月名義）',label:'音倉レコード',image:'',fav:false,tidbits:'2度目の活動再開後初のフルアルバム。「ウロボロス」収録。',links:[]},
+    // 天野月名義 オリジナル
+    {id:'alb7',artist:'天野月',title:'Licht',releaseYear:'2010-07-07',albumType:'ミニアルバム（天野月名義1st）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義での初のオリジナルミニアルバム（全7曲）。ヴォーカルをはじめほとんどのパートをライヴ録音。「汚れた犬」収録。限定盤DVDには渋谷PLEASURE PLEASUREでのRecording Liveの映像を収録。活動再開後「素の自分で歌う」ことを表明した原点的作品。',links:[]},
+    {id:'alb8',artist:'天野月',title:'CHELSEA',releaseYear:'2011-02-14',albumType:'ミニアルバム（天野月名義2nd）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義2枚目のミニアルバム（全7曲）。バレンタインデーにリリース。「BLACK HOLE」収録。付属DVDに「CORE」のMVを収録。',links:[]},
+    {id:'alb9',artist:'天野月',title:'薔薇と真珠',releaseYear:'2011-11-09',albumType:'ミニアルバム（天野月名義3rd）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義3枚目のミニアルバム（全7曲）。デビュー10周年を記念した年にリリース。',links:[]},
+    {id:'alb10',artist:'天野月',title:'天の樹',releaseYear:'2012-07-25',albumType:'フルアルバム（天野月名義1st）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義での初のフルアルバム（全10曲）。チェリストの分島花音が参加。「音叉」収録。付属DVDにDocumentary of AMANO（約20年分のオフショット映像・約170分）を収録。',links:[]},
+    {id:'alb11',artist:'天野月',title:'静かの海',releaseYear:'2012-11-07',albumType:'バラード集',label:'音倉レコード',image:'',fav:false,tidbits:'天野月初のバラード集（全11曲）。デビュー当時からの楽曲を本人セレクトで再レコーディング・リアレンジ。「月」「翡翠」「真珠」等収録。タイトルは月のクレーター「静かの海（Mare Tranquillitatis）」から。',links:[]},
+    {id:'alb12',artist:'天野月',title:'Daisy',releaseYear:'2013-09-25',albumType:'フルアルバム（天野月名義2nd）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義2枚目のフルアルバム（全10曲）。「ハジケトブゲノム」「Daisy」収録。',links:[]},
+    {id:'alb13',artist:'天野月',title:'ごもくならべ',releaseYear:'2014-10-01',albumType:'ミニアルバム（天野月名義4th）',label:'音倉レコード',image:'',fav:false,tidbits:'天野月名義活動5周年を記念した全5曲のミニアルバム。WiiU「零～濡鴉ノ巫女～」タイアップ曲「鳥籠-in this cage-」を含む。ジャケットは天野月自身による絵。',links:[]},
+    {id:'alb14',artist:'天野月',title:'帰省ラッシュ',releaseYear:'2015-06-10',albumType:'セルフカバーアルバム（2枚組）',label:'音倉レコード',image:'',fav:false,tidbits:'2枚組全20曲のセルフカバーアルバム。天野月子時代・天野月時代の楽曲を新録。「ミサイル」「裸足のマーメイド」「Ride On」等収録。',links:[]},
+    {id:'alb15',artist:'天野月',title:'ビューティフル・デイズ -前編-',releaseYear:'2016-11-16',albumType:'フルアルバム（天野月名義）',label:'音倉レコード',image:'',fav:false,tidbits:'前後編2部作の前編。「HIDE&SEEK」収録。',links:[]},
+    {id:'alb16',artist:'天野月',title:'ビューティフル・デイズ -後編-',releaseYear:'2017-04-26',albumType:'フルアルバム（天野月名義）',label:'音倉レコード',image:'',fav:false,tidbits:'前後編2部作の後編。「帰り路」「空中散歩」収録。活動休止（2017年8月）前最後のリリース作品。',links:[]},
+    {id:'alb17',artist:'天野月',title:'Five Rings',releaseYear:'2019-04-01',albumType:'フルアルバム（天野月名義）',label:'音倉レコード',image:'',fav:false,tidbits:'2度目の活動再開後初のフルアルバム。「ウロボロス」収録。通常盤・限定盤A/B/C/D の複数形態でリリース。4月1日（エイプリルフール）にリリースというお茶目な選択。',links:[]},
+    {id:'alb18',artist:'天野月',title:'動物園',releaseYear:'2019-09-10',albumType:'アコースティックアルバム',label:'音倉レコード',image:'',fav:false,tidbits:'初のアコースティックコンセプトアルバム。「植物園」と同日2枚同時リリース。',links:[]},
+    {id:'alb19',artist:'天野月',title:'植物園',releaseYear:'2019-09-10',albumType:'アコースティックアルバム',label:'音倉レコード',image:'',fav:false,tidbits:'初のアコースティックコンセプトアルバム。「動物園」と同日2枚同時リリース。',links:[]},
+    {id:'alb20',artist:'天野月',title:'水族館',releaseYear:'2021-10-01',albumType:'アルバム（天野月名義）',label:'HeadAmp Lab.',image:'',fav:false,tidbits:'音倉レコード退所後、個人事務所HeadAmp Lab.設立後の作品。',links:[]},
+    {id:'alb21',artist:'天野月',title:'ハイウェイ',releaseYear:'2021-10-01',albumType:'アルバム（天野月名義）',label:'HeadAmp Lab.',image:'',fav:false,tidbits:'「水族館」と同日リリース。',links:[]},
+    {id:'alb22',artist:'天野月',title:'怪獣',releaseYear:'2023-11-01',albumType:'アルバム（天野月名義）',label:'HeadAmp Lab.',image:'',fav:false,tidbits:'',links:[]},
+    {id:'alb23',artist:'天野月',title:'花蝶風月',releaseYear:'2026-04-25',albumType:'ミニアルバム（天野月名義）',label:'HeadAmp Lab.',image:'',fav:false,tidbits:'2026年4月25日リリースのミニアルバム。「猫といる暮らし」と同日2枚同時リリース。MVが公開された「うつし絵」を収録。レコ発ライヴが2026年6月13日に開催予定。',links:[{label:'公式サイト',url:'https://tsuki-amano.com'}]},
+    {id:'alb24',artist:'天野月',title:'猫といる暮らし',releaseYear:'2026-04-25',albumType:'アコースティックアルバム（天野月名義）',label:'HeadAmp Lab.',image:'',fav:false,tidbits:'2026年4月25日リリースのアコースティックアルバム。「花蝶風月」と同日2枚同時リリース。',links:[{label:'公式サイト',url:'https://tsuki-amano.com'}]},
+    // 天野月子名義 ベスト・コンピ
+    {id:'alb25',artist:'天野月子',title:'WINONA RIDERS 〜月の裏側〜',releaseYear:'2004-04-04',albumType:'カップリングベストアルバム',label:'ポニーキャニオン',image:'',fav:false,tidbits:'初のカップリングベストアルバム（全10曲）。タイトルは女優ウィノナ・ライダーに由来。シングルのカップリング曲を中心に収録。',links:[]},
+    {id:'alb26',artist:'天野月子',title:'デラックスカタログ',releaseYear:'2006-11-15',albumType:'ベストアルバム',label:'ポニーキャニオン',image:'',fav:false,tidbits:'デビュー5周年「ゴネンジャー」企画のベストアルバム（2CD+DVD）。CD-DISC1は2001〜2005年の全シングル曲、CD-DISC2は未発表曲1曲を含むシングル候補曲。2007年3月31日までの期間限定生産。DVDに「イデア」「翡翠」「聲」「Love Dealer-2006-」のMVを収録。',links:[]},
+    {id:'alb27',artist:'天野月子',title:'ウマ・サーモン',releaseYear:'2007-07-23',albumType:'カップリングベストアルバム（2nd）',label:'音倉レコード',image:'',fav:false,tidbits:'インディーズ回帰後にリリースした2枚目のカップリングベストアルバム。ROLLYが「萌」の演奏に参加。タイトルは女優ユマ・サーマンに由来。',links:[]},
+    {id:'alb28',artist:'天野月子',title:'NOiSE',releaseYear:'2008-11-24',albumType:'インディーズベストミニアルバム',label:'音倉レコード',image:'',fav:false,tidbits:'歌手活動停止前最後の作品。ラストライブ「R.T.Z.」と同日発売。インディーズ活動を総括したベストミニアルバム。',links:[]},
   ];
   const songs=[
     {id:'s01',artist:'天野月子',title:'菩提樹',releaseYear:'2002-06-05',albumId:'alb1',lyricist:'天野月子',composer:'天野月子',edition:'',tidbits:'メジャー4thシングル。作詞・作曲：天野月子 編曲：戸倉弘智。',links:[],fav:false},
@@ -538,32 +559,40 @@ function previewImg(input,prevId,iconId,dataId){
   r.onload=e=>{document.getElementById(prevId).src=e.target.result;document.getElementById(prevId).style.display='block';document.getElementById(iconId).style.display='none';document.getElementById(dataId).value=e.target.result;};
   r.readAsDataURL(file);
 }
-function toggleSort(){
-  showSortDrop=!showSortDrop;showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');
-  const drop=document.getElementById('sortDrop');
-  if(showSortDrop){
+function closeAllDropdowns(){
+  showSortDrop=false;showFilterDrop=false;
+  document.getElementById('sortDrop').classList.add('hidden');
+  document.getElementById('filterDrop').classList.add('hidden');
+}
+function toggleSort(e){
+  e.stopPropagation();
+  const opening=!showSortDrop;
+  closeAllDropdowns();
+  if(opening){
+    showSortDrop=true;
+    const drop=document.getElementById('sortDrop');
     const opts=currentTab==='lives'?[['date','開催日'],['artist','アーティスト五十音'],['name','ライブ名五十音']]:[['year','リリース年'],['artist','アーティスト五十音'],['name',currentTab==='albums'?'アルバム名五十音':'楽曲名五十音']];
-    drop.innerHTML=opts.map(([k,l])=>`<div class="dropdown-item ${sortKey===k?'active':''}" onclick="setSort('${k}')">${sortKey===k?'✓ ':''}${l}</div>`).join('');
+    drop.innerHTML=opts.map(([k,l])=>`<div class="dropdown-item ${sortKey===k?'active':''}" onclick="setSort('${k}',event)">${sortKey===k?'✓ ':''}${l}</div>`).join('');
     drop.classList.remove('hidden');
-  }else{drop.classList.add('hidden');}
+  }
 }
-function setSort(k){sortKey=k;showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');render();}
-function toggleFilter(){
-  showFilterDrop=!showFilterDrop;showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');
-  const drop=document.getElementById('filterDrop');
-  if(showFilterDrop){
+function setSort(k,e){if(e)e.stopPropagation();sortKey=k;closeAllDropdowns();render();}
+function toggleFilter(e){
+  e.stopPropagation();
+  const opening=!showFilterDrop;
+  closeAllDropdowns();
+  if(opening){
+    showFilterDrop=true;
+    const drop=document.getElementById('filterDrop');
     const artists=getArtists();
-    drop.innerHTML=`<div class="dropdown-item ${filterArtist===''?'active':''}" onclick="setFilter('')">${filterArtist===''?'✓ ':''}すべて表示</div>`+artists.map(a=>`<div class="dropdown-item ${filterArtist===a?'active':''}" onclick="setFilter(${JSON.stringify(a)})">${filterArtist===a?'✓ ':''}${esc(a)}</div>`).join('');
+    drop.innerHTML=`<div class="dropdown-item ${filterArtist===''?'active':''}" onclick="setFilter('',event)">${filterArtist===''?'✓ ':''}すべて表示</div>`+artists.map(a=>`<div class="dropdown-item ${filterArtist===a?'active':''}" onclick="setFilter(${JSON.stringify(a)},event)">${filterArtist===a?'✓ ':''}${esc(a)}</div>`).join('');
     drop.classList.remove('hidden');
-  }else{drop.classList.add('hidden');}
+  }
 }
-function setFilter(a){filterArtist=a;showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');render();}
+function setFilter(a,e){if(e)e.stopPropagation();filterArtist=a;closeAllDropdowns();render();}
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
 
-document.addEventListener('click',e=>{
-  if(!document.getElementById('sortWrap').contains(e.target)){showSortDrop=false;document.getElementById('sortDrop').classList.add('hidden');}
-  if(!document.getElementById('filterWrap').contains(e.target)){showFilterDrop=false;document.getElementById('filterDrop').classList.add('hidden');}
-});
+document.addEventListener('click',()=>closeAllDropdowns());
 ['overlayAlbum','overlaySong','overlayLive'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeModal(id);});
 });
